@@ -8,5 +8,5 @@ Bot to play [Mäelstrom MMO](https://github.com/demiurgosoft/maelstrom)
 
 ## Geting Started
 1. To install the app and necessary dependencies: `npm install --production`
-2. Check the data in `config/config.js` is valid
+2. Check the data in `config/user.js` is valid
 3. To start the bot: `npm start`

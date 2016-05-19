@@ -6,9 +6,6 @@ var ShipModels = {
     list: [],
     refresh: function(done) {
         request.get(config.worldUrl+'/ship_models')
-            //  .send({ name: 'Manny', species: 'cat' })
-            //  .set('X-API-Key', 'foobar')
-            //  .set('Accept', 'application/json')
             .end(function(err, res) {
                 if (err) {
                     console.log(err);
