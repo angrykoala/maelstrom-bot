@@ -19,8 +19,8 @@ var Map = {
             }.bind(this));
     },
     getCity: function(city,done){
-        if(!city) return done(new Error("Not valid city"));
-        request.get(config.worldUrl+'/city/'+city)
+        if(!city || city.slug) return done(new Error("Not valid city"));
+        request.get(config.worldUrl+'/city/'+city.slug)
             .end(function(err, res) {
                     return done(err,res.body);
             });

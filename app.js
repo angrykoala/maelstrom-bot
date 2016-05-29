@@ -1,25 +1,33 @@
-var Map = require('./app/map');
-var ShipModels = require('./app/shipModels');
-var Login = require('./app/login');
-var Ships = require('./app/ships');
+var user=require('./config/user');
+var Bot=require('./app/bot');
 
-Map.refresh(function() {
+var version=process.env.npm_package_version;
+
+console.log("Maelström Bot - "+user.username);
+console.log("version "+version);
+Bot();
+
+/*Map.refresh(function() {
     console.log(Map.list);
     Map.getCity(Map.list[0],function(err,res){
         if(err) console.log(err);
-        console.log(res);
     ShipModels.refresh(function() {
         console.log(ShipModels.list);
         Login.refresh(function() {
             console.log(Login.token);
             Ships.refresh(function() {
                 console.log(Ships.list);
-                Ships.getShip(Ships.list[0],function(err,res){
-                    if(err) console.log(err);
-                    console.log(res);
-                });
+                if(Ships.list.length===0){
+                    Ships.buildShip(ShipModels.list[0],Map.list[0],"Golden Heart",function(err,res){
+                        if(err) console.log(err);
+                        console.log(res);
+                        Ships.refresh(function(){
+                            console.log(Ship.list);
+                        });
+                    });
+                }
             });
             });
         });
     });
-});
+});*/
