@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/demiurgosoft/maelstrom-bot#readme",
   "dependencies": {
+    "async": "^2.0.0-rc.5",
     "superagent": "^2.0.0-alpha.3"
   }
 }

@@ -1,18 +1,20 @@
 var Map = require('./map');
-var Login=require('./login');
+var Login = require('./login');
 var ShipModels = require('./shipModels');
-var Ships=require('./ships');
-var User=require('./user');
+var Ships = require('./ships');
+var User = require('./user');
+
+var async = require('async');
 
 function initialize(done) {
     Map.refresh(function() {
         ShipModels.refresh(function() {
             Login.refresh(function() {
                 Ships.refresh(function() {
-                    User.refresh(function(){
-                    console.log("Bot Started");
-                    done();
-                });
+                    User.refresh(function() {
+                        console.log("Bot Started");
+                        done();
+                    });
                 });
             });
         });
@@ -47,39 +49,53 @@ var actions = {
             n++;
             Ships.buildShip(getCheapestModel(), getRandomCity().slug, "Golden Heart MK-" + n, function(err, res) {
                 Ships.refresh(function() {
-                    if(!err) console.log("OK");
+                    if (!err) console.log("OK");
                     return done(err);
                 });
             });
         });
     },
-    moveShip: function(ship,done){
+    moveShip: function(ship, done) {
         console.log("--Move Ship");
-        var c=getRandomCity();
-        while(c===ship.city) c=getRandomCity();
-        Ships.moveShip(ship,c.slug,function(err,res){
-            if(!err) console.log("OK");
+        var c = getRandomCity();
+        while (c === ship.city) c = getRandomCity();
+        Ships.moveShip(ship, c.slug, function(err, res) {
+            if (!err) console.log("OK");
             return done(err);
         });
     },
-    tradeProducts: function(ship,done){
+    tradeProducts: function(ship, done) {
         console.log("--Trade Products");
-        Ships.getShip(ship,function(err,res){
-            if(err) return done(err);
-            var s=res;
-            Map.getCityProducts(s.city,function(err,res){
-                if(err) console.log(err);
-                var c=res;
-                console.log(s);
-                console.log(c);
-                Ships.buyProduct(s.slug,"timber",1,function(err,res){
-                    console.log(err);
-                    console.log(res);
-                    Ships.sellProduct(s.slug,"timber",1,function(err,res){
-                    console.log(err);
-                    console.log(res);
-                    done();
-                });
+        Ships.getShip(ship, function(err, res) {
+            if (err) return done(err);
+            var s = res;
+            console.log(s);
+            if(s.status.value!='docked') return done();
+            Map.getCityProducts(s.city, function(err, res) {
+                if (err) console.log(err);
+                var c = res;
+                var sellprods = [];
+                var buyprods = [];
+                for (var i in c) if (c[i].quantity >= 20 && c[i].production > 0) buyprods.push(i);
+                for (var j in s.cargo) if (c[j].quantity <= 2 && c[j].production < 0 && s.cargo[j]>=10) sellprods.push(j);
+                //Sells products
+                async.each(sellprods, function(item, cb) {
+                    Ships.sellProduct(s.slug, item, 10, function(err, res) {
+                        //if (err) console.log(err);
+                        console.log(res);
+                        cb();
+                    });
+
+                }, function() {
+                    //Buy products
+                    async.each(buyprods, function(item, cb) {
+                        Ships.buyProduct(s.slug, item, 10, function(err, res) {
+                            //if (err) console.log(err);
+                            console.log(res);
+                            cb();
+                        });
+
+                    }, done);
                 });
             });
         });
@@ -88,22 +104,22 @@ var actions = {
 
 var heuristics = {
     build: function() {
-        if(Ships.list.length===0 && getCheapestModel().price<=User.money) return true;
+        if (Ships.list.length === 0 && getCheapestModel().price <= User.money) return true;
         else return false;
 
     }
 };
 
-function bindAction(heuristic,action,next){
-    if(heuristic()) return action(next);
+function bindAction(heuristic, action, next) {
+    if (heuristic()) return action(next);
     else return next();
 }
 
 module.exports = function() {
     initialize(function() {
-        bindAction(heuristics.build,actions.buildShip,function(err){
-            if(err) console.log(err);
-            actions.tradeProducts(Ships.list[0],function(err,res){
+        bindAction(heuristics.build, actions.buildShip, function(err) {
+            if (err) console.log(err);
+            actions.tradeProducts(Ships.list[0], function(err, res) {
                 console.log(err);
             });
         });
