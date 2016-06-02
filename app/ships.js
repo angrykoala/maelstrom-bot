@@ -34,7 +34,7 @@ var Ships = {
         if(!city || !city.slug) return done(new Error("Not valid city"));
         var id = ship.slug;
         if(city===ship.city) return done(new Error("City===Destiny"));
-        request.post(config.worldUrl + '/user/move/ship/')
+        request.put(config.worldUrl + '/user/move/ship/')
             .set('Authorization', "Bearer " + Login.token)
             .send({ship:ship.slug,city:city.slug})
             .end(function(err, res) {
