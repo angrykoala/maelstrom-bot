@@ -1,6 +1,6 @@
 {
   "name": "maelstrom-bot",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A simple bot for maelstrom MMO videogame",
   "main": "app.js",
   "scripts": {

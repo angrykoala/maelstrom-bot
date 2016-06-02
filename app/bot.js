@@ -54,39 +54,45 @@ var actions = {
     },
     moveShip: function(ship, done) {
         console.log("--Move Ship [" + ship.slug + "]");
-        if (ship.status.value !== "docked") return done();
-        var c = getRandomCity();
-        while (c === ship.city) c = getRandomCity();
-        Ships.moveShip(s, c, done);
+        Ships.getShip(ship, function(err, res) {
+            if (err) return done(err);
+            var s = res;
+            if (s.status.value !== "docked") return done();
+            var c = getRandomCity();
+            while (c === s.city) c = getRandomCity();
+            Ships.moveShip(s, c, done);
+        });
     },
     tradeProducts: function(ship, done) {
         console.log("--Trade Products [" + ship.slug + "]");
-        if (ship.status.value != 'docked') return done();
-        Map.getCityProducts(ship.city, function(err, res) {
-            if (err) console.log(err);
-            var c = res;
-            var sellprods = [];
-            var buyprods = [];
-            for (var i in c)
-                if (c[i].quantity >= 20 && c[i].production > 0) buyprods.push(i);
-            for (var j in s.cargo)
-                if (c[j].quantity <= 2 && c[j].production < 0 && s.cargo[j] >= 10) sellprods.push(j);
-                //Sells products
-            async.each(sellprods, function(item, cb) {
-                Ships.sellProduct(s.slug, item, 10, function(err, res) {
-                    //if (err) console.log(err);
-                    cb();
-                });
-
-            }, function() {
-                //Buy products
-                async.each(buyprods, function(item, cb) {
-                    Ships.buyProduct(s.slug, item, 10, function(err, res) {
+        Ships.getShip(ship, function(err, res) {
+            if (err) return done(err);
+            var s = res;
+            if (s.status.value != 'docked') return done();
+            Map.getCityProducts(s.city, function(err, res) {
+                if (err) console.log(err);
+                var c = res;
+                var sellprods = [];
+                var buyprods = [];
+                for (var i in c)
+                    if (c[i].quantity >= 20 && c[i].production > 0) buyprods.push(i);
+                for (var j in s.cargo)
+                    if (c[j].quantity <= 2 && c[j].production < 0 && s.cargo[j] >= 10) sellprods.push(j);
+                    //Sells products
+                async.each(sellprods, function(item, cb) {
+                    Ships.sellProduct(s.slug, item, 10, function(err, res) {
                         //if (err) console.log(err);
                         cb();
                     });
-
-                }, done);
+                }, function() {
+                    //Buy products
+                    async.each(buyprods, function(item, cb) {
+                        Ships.buyProduct(s.slug, item, 10, function(err, res) {
+                            //if (err) console.log(err);
+                            cb();
+                        });
+                    }, done);
+                });
             });
         });
     }
@@ -104,21 +110,27 @@ function bindAction(heuristic, action, next) {
     else return next();
 }
 
+function mainLoop() {
+    console.log("Main Loop");
+    bindAction(heuristics.build, actions.buildShip, function(err) {
+        if (err) console.log(err);
+        async.each(Ships.list, function(item, cb) {
+            actions.tradeProducts(item, function(err) {
+                if (err) console.log(err);
+                actions.moveShip(item, function(err) {
+                    if (err) console.log(err);
+                    cb();
+                });
+            });
+        }, function(err) {
+            if (err) console.log(err);
+        });
+    });
+
+}
+
 module.exports = function() {
     initialize(function() {
-        bindAction(heuristics.build, actions.buildShip, function(err) {
-            if (err) console.log(err);
-            async.each(Ships.list, function(item, cb) {
-                actions.tradeProducts(item, function(err) {
-                    if (err) console.log(err);
-                    actions.moveShip(item, function(err) {
-                        if (err) console.log(err);
-                        cb();
-                    });
-                });
-            }, function(err) {
-                if (err) console.log(err);
-            });
-        });
+        setInterval(mainLoop, 3000);
     });
 };
