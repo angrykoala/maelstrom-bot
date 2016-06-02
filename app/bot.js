@@ -101,6 +101,7 @@ var actions = {
 var heuristics = {
     build: function() {
         if (Ships.list.length === 0 && getCheapestModel().price <= User.money) return true;
+        if(User.money>(getCheapestModel().price*3)) return true;
         else return false;
     }
 };
