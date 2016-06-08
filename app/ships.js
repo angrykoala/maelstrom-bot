@@ -26,7 +26,8 @@ var Ships = {
         request.get(config.worldUrl + '/user/ship/' + id)
             .set('Authorization', "Bearer " + Login.token)
             .end(function(err, res) {
-                return done(err, res.body);
+                if(err || !res) return done(err);
+                else return done(null,res.body);
             });
     },
     moveShip: function(ship, city, done) {
@@ -43,7 +44,6 @@ var Ships = {
     },
     buyProduct: function(ship, product,quantity, done) {
         if(!ship || !product) return done(new Error("Not valid data"));
-        cb=this.refresh;
 
         request.put(config.worldUrl+'/user/buy')
             .set('Authorization', "Bearer " + Login.token)
@@ -54,7 +54,6 @@ var Ships = {
     },
     sellProduct: function(ship, product,quantity, done) {
         if(!ship || !product) return done(new Error("Not valid data"));
-        cb=this.refresh;
 
         request.put(config.worldUrl+'/user/sell')
             .set('Authorization', "Bearer " + Login.token)

@@ -56,13 +56,11 @@ return ship;
 var actions = {
     buildShip: function(done) {
         console.log("--Build Ship");
-        Ships.refresh(function() {
             var n = Ships.list.length;
             n++;
             Ships.buildShip(getRandomModel(), getRandomCity().slug, "Golden Heart MK-" + n, function(err, res) {
-                Ships.refresh(done);
+                done();
             });
-        });
     },
     moveShip: function(ship, done) {
         Ships.getShip(ship, function(err, res) {
