@@ -10,14 +10,18 @@ function initialize(done) {
     Map.refresh(function() {
         ShipModels.refresh(function() {
             Login.refresh(function() {
-                Ships.refresh(function() {
-                    User.refresh(function() {
-                        console.log("Bot Started");
-                        done();
-                    });
+                dataRefresh(function() {
+                    console.log("Bot Started");
+                    done();
                 });
             });
         });
+    });
+}
+
+function dataRefresh(done) {
+    Ships.refresh(function() {
+        User.refresh(done);
     });
 }
 
@@ -40,6 +44,14 @@ function getCheapestModel() {
     return res;
 }
 
+function getRandomModel() {
+    if (getCheapestModel().price > User.money) return null;
+    var ship;
+    do{
+    ship = ShipModels.list[Math.floor(Math.random() * ShipModels.list.length)];
+}while(ship.price>User.money);
+return ship;
+}
 
 var actions = {
     buildShip: function(done) {
@@ -47,28 +59,28 @@ var actions = {
         Ships.refresh(function() {
             var n = Ships.list.length;
             n++;
-            Ships.buildShip(getCheapestModel(), getRandomCity().slug, "Golden Heart MK-" + n, function(err, res) {
+            Ships.buildShip(getRandomModel(), getRandomCity().slug, "Golden Heart MK-" + n, function(err, res) {
                 Ships.refresh(done);
             });
         });
     },
     moveShip: function(ship, done) {
-        console.log("--Move Ship [" + ship.slug + "]");
         Ships.getShip(ship, function(err, res) {
             if (err) return done(err);
             var s = res;
             if (s.status.value !== "docked") return done();
+            console.log("--Move Ship [" + ship.slug + "]");
             var c = getRandomCity();
             while (c === s.city) c = getRandomCity();
             Ships.moveShip(s, c, done);
         });
     },
     tradeProducts: function(ship, done) {
-        console.log("--Trade Products [" + ship.slug + "]");
         Ships.getShip(ship, function(err, res) {
             if (err) return done(err);
             var s = res;
             if (s.status.value != 'docked') return done();
+            console.log("--Trade Products [" + ship.slug + "]");
             Map.getCityProducts(s.city, function(err, res) {
                 if (err) console.log(err);
                 var c = res;
@@ -101,7 +113,7 @@ var actions = {
 var heuristics = {
     build: function() {
         if (Ships.list.length === 0 && getCheapestModel().price <= User.money) return true;
-        if(User.money>(getCheapestModel().price*3)) return true;
+        if (User.money > (getCheapestModel().price * 3)) return true;
         else return false;
     }
 };
@@ -112,7 +124,12 @@ function bindAction(heuristic, action, next) {
 }
 
 function mainLoop() {
+    var m=getRandomModel();
     console.log("Main Loop");
+    dataRefresh(function(err){
+        if(err) console.log(err);
+        console.log("-Money: "+User.money);
+        console.log("-Ship Count: "+Ships.list.length);
     bindAction(heuristics.build, actions.buildShip, function(err) {
         if (err) console.log(err);
         async.each(Ships.list, function(item, cb) {
@@ -126,6 +143,7 @@ function mainLoop() {
         }, function(err) {
             if (err) console.log(err);
         });
+    });
     });
 
 }
