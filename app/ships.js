@@ -66,7 +66,6 @@ var Ships = {
     },
     buildShip:function(shipModel,city,name,done){
         if(!shipModel || !shipModel.slug || !city || !name) return done(new Error("Not valid data"));
-        cb=this.refresh;
 
         request.put(config.worldUrl+'/user/build/ship')
             .set('Authorization', "Bearer " + Login.token)
